@@ -274,8 +274,10 @@ def _create_dataset_worker(param):
 
 
 def _create_dataset(dataset_path, sgf_dir, image_dir, augment, is_syn):
-    from config import DATA_CONVERTOR_WORKER_COUNT, IMAGE_DATASET_NAME, BOARD_DATASET_NAME
+    from config import dataset_dir, DATA_CONVERTOR_WORKER_COUNT, IMAGE_DATASET_NAME, BOARD_DATASET_NAME
 
+    if not os.path.isdir(dataset_dir):
+        os.mkdir(dataset_dir)
     if os.path.isfile(dataset_path):
         os.remove(dataset_path)
 
@@ -346,5 +348,5 @@ def create_syn_dataset(dataset_path, sgf_dir, augment=False, output_image_dir=No
 if __name__ == '__main__':
     from config import syn_sgf_dir, syn_training_dataset_path, syn_test_dataset_path, syn_output_image_dir, real_image_dir, real_sgf_dir, real_test_dataset_path
     # create_syn_dataset(syn_training_dataset_path, syn_sgf_dir, augment=True, output_image_dir=syn_output_image_dir)
-    create_real_dataset(real_test_dataset_path, real_sgf_dir, real_image_dir, augment=False)
+    create_real_dataset(real_test_dataset_path, real_sgf_dir, real_image_dir, augment=True)
     # create_syn_dataset(syn_test_dataset_path, syn_sgf_dir, augment=True)

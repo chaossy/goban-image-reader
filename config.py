@@ -20,10 +20,11 @@ log_file_path = os.path.join(proj_path, 'log')
 syn_sgf_dir = os.path.join(proj_path, 'input', 'syn_sgf')
 real_sgf_dir = os.path.join(proj_path, 'input', 'real_sgf')
 real_image_dir = os.path.join(proj_path, 'input', 'real_image')
-syn_output_image_dir = os.path.join(proj_path, 'dataset', 'syn_image')
-syn_training_dataset_path = os.path.join(proj_path, 'dataset', _dataset_name('syn_training_data'))
-syn_test_dataset_path = os.path.join(proj_path, 'dataset', _dataset_name('syn_test_data'))
-real_test_dataset_path = os.path.join(proj_path, 'dataset', _dataset_name('real_test_data'))
+dataset_dir = os.path.join(proj_path, 'dataset')
+syn_output_image_dir = os.path.join(dataset_dir, 'syn_image')
+syn_training_dataset_path = os.path.join(dataset_dir, _dataset_name('syn_training_data'))
+syn_test_dataset_path = os.path.join(dataset_dir, _dataset_name('syn_test_data'))
+real_test_dataset_path = os.path.join(dataset_dir, _dataset_name('real_test_data'))
 
 ''' training '''
 LR = 0.004#0.0004
