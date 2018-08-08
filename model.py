@@ -61,7 +61,7 @@ class PZSZModel:
         'kernel_regularizer': regularizers.l2(REG),
         # 'bias_regularizer': regularizers.l2(conf['c']),
     }
-    _RES_BLOCK_COUNTS = [2, 3, 5, 2]
+    _RES_BLOCK_COUNTS = [2, 2, 3, 2]
     _RES_BLOCK_FILTERS = [64, 128, 256, 512]
 
     def __init__(self, model_path=None, is_training=False):

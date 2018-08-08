@@ -126,9 +126,9 @@ def predict(model_path=os.path.join(proj_path, 'best_model.hdf5')):
 
 
 if __name__ == '__main__':
-    # train()
+    train()
 
     # from config import real_test_dataset_path
     # evaluate(real_test_dataset_path, model_path=os.path.join(proj_path, '51.hdf5'))
 
-    predict()
+    # predict()
