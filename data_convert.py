@@ -33,6 +33,8 @@ def _get_image_data_from_image(im, augment=False):
         im_array = np.swapaxes(im_array, 0, 2)
         im_array = np.swapaxes(im_array, 1, 2)
         im_array = im_array[:3, ...]
+    else:
+        im_array = np.expand_dims(im_array, axis=0)
     if augment:
         data = _augment_data(im_array, dtype=np.uint8)
     else:

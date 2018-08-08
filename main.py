@@ -102,26 +102,33 @@ def predict(model_path=os.path.join(proj_path, 'best_model.hdf5')):
     model = PZSZModel(model_path)
     from PIL import Image
     from board import Board
-
     board = Board()
     for i in range(417, 418):
-        im = Image.open(os.path.join(proj_path, 'image/{}.png'.format(str(i))))
+        im = Image.open(os.path.join(proj_path, 'input', 'real_image', '{}.png'.format(str(i))))
         im.thumbnail((TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE))
+        if IMAGE_CHANNELS == 1:
+            im = im.convert('L')
         im_array = np.array(im)
         Image.fromarray(im_array).show()
-        im_array = np.swapaxes(im_array, 0, 2)
-        im_array = np.swapaxes(im_array, 1, 2)
-        # im_array_list[i] = im_array
-        output = model.predict(np.expand_dims(im_array[:3, ...], axis=0))
-        board.board = output[0]
-        print('{}:'.format(i))
+        if IMAGE_CHANNELS == 3:
+            im_array = np.swapaxes(im_array, 0, 2)
+            im_array = np.swapaxes(im_array, 1, 2)
+            # im_array_list[i] = im_array
+            output = model.predict(np.expand_dims(im_array[:3, ...], axis=0))
+            board.board = output[0]
+            print('{}:'.format(i))
+        else:
+            im_array = np.expand_dims(im_array, axis=0)
+            output = model.predict(np.expand_dims(im_array, axis=0))
+            board.board = output[0]
+            print('{}:'.format(i))
         board.pretty_board()
 
 
 if __name__ == '__main__':
     # train()
 
-    from config import syn_test_dataset_path
-    evaluate(syn_test_dataset_path)
+    # from config import real_test_dataset_path
+    # evaluate(real_test_dataset_path, model_path=os.path.join(proj_path, '51.hdf5'))
 
-    # predict()
+    predict()
