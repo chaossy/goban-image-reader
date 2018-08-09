@@ -50,7 +50,7 @@ def train():
         assert dset_size == np.shape(board_dset)[0]
         val_dset_size = int(dset_size * 0.1)
         train_dset_size = dset_size - val_dset_size
-        chunk_size = 512 * 130
+        chunk_size = 512 * 100
 
         def generator(is_training):
             lower_bound = 0 if is_training else train_dset_size
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     parser.add_argument("--train", "-t", action='store_true')
     parser.add_argument("--evaluate", "-e", action='store_true')
     parser.add_argument("--predict", "-p", action='store_true')
-    parser.add_argument("--model_file", "-m", help="Path of the model file for evaluating or predicting.", default=os.path.join(proj_path, 'best_model.hdf5'), type=str)
+    parser.add_argument("--model", "-m", help="Path of the model file for evaluating or predicting.", default=os.path.join(proj_path, 'best_model.hdf5'), type=str)
     args = parser.parse_args(sys.argv[1:] if len(sys.argv) > 1 else ['-h'])
     if not os.path.isfile(args.model):
         raise ValueError('Model file not exist.')
