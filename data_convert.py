@@ -1,4 +1,4 @@
-from config import TRAIN_IMAGE_SIZE, BOARD_SIZE, SYN_IMAGE_SIZE, IMAGE_CHANNELS, BUFFER_DATA_COUNT, MAX_BUFFER_DATA_COUNT, proj_path
+from config import TRAIN_IMAGE_SIZE, BOARD_SIZE, SYN_IMAGE_SIZE, IMAGE_CHANNELS, BUFFER_DATA_SIZE, MAX_BUFFER_DATA_SIZE, proj_path
 import h5py
 import numpy as np
 import os
@@ -8,6 +8,8 @@ from PIL import Image, ImageDraw
 import multiprocessing as mp
 import ctypes as c
 import time
+import argparse
+import sys
 
 
 #TODO: 强化照片(光线, 背景), tensorboard
@@ -149,7 +151,7 @@ def _synthesize_board_image(board, save_image_path=None):
 
     ''' board '''
     board_index = np.random.randint(1, 7)
-    path = os.path.join(proj_path, 'res', 'goban{}.png'.format(board_index))
+    path = os.path.join(proj_path, 'assets', 'goban{}.png'.format(board_index))
     im_board = Image.open(path)
     im_board = im_board.resize((board_end_x - board_start_x, board_end_y - board_start_y))
     im_board = im_board.rotate(90 * np.random.randint(0, 4))
@@ -172,12 +174,12 @@ def _synthesize_board_image(board, save_image_path=None):
 
     ''' stone '''
     b_index = np.random.randint(1, 9)
-    path = os.path.join(proj_path, 'res', 'b{}.png'.format(b_index))
+    path = os.path.join(proj_path, 'assets', 'b{}.png'.format(b_index))
     im_black_stone = Image.open(path)
     im_black_stone = im_black_stone.resize((stone_size, stone_size))
     im_black_stone = im_black_stone.rotate(np.random.randint(0, 360))
     w_index = np.random.randint(1, 9)
-    path = os.path.join(proj_path, 'res', 'w{}.png'.format(w_index))
+    path = os.path.join(proj_path, 'assets', 'w{}.png'.format(w_index))
     im_white_stone = Image.open(path)
     im_white_stone = im_white_stone.resize((stone_size, stone_size))
     im_white_stone = im_white_stone.rotate(np.random.randint(0, 360))
@@ -231,12 +233,12 @@ def _synthesize_board_image(board, save_image_path=None):
     return im
 
 
-_c_board_list = mp.Array(c.c_bool, MAX_BUFFER_DATA_COUNT * 3 * BOARD_SIZE * BOARD_SIZE, lock=False)
-_c_image_list = mp.Array(c.c_uint8, MAX_BUFFER_DATA_COUNT * IMAGE_CHANNELS * TRAIN_IMAGE_SIZE * TRAIN_IMAGE_SIZE, lock=False)
+_c_board_list = mp.Array(c.c_bool, MAX_BUFFER_DATA_SIZE * 3 * BOARD_SIZE * BOARD_SIZE, lock=False)
+_c_image_list = mp.Array(c.c_uint8, MAX_BUFFER_DATA_SIZE * IMAGE_CHANNELS * TRAIN_IMAGE_SIZE * TRAIN_IMAGE_SIZE, lock=False)
 _board_list = np.frombuffer(_c_board_list, dtype=np.bool)
-_board_list = np.reshape(_board_list, (MAX_BUFFER_DATA_COUNT, 3 * BOARD_SIZE * BOARD_SIZE))
+_board_list = np.reshape(_board_list, (MAX_BUFFER_DATA_SIZE, 3 * BOARD_SIZE * BOARD_SIZE))
 _image_list = np.frombuffer(_c_image_list, dtype=np.uint8)
-_image_list = np.reshape(_image_list, (MAX_BUFFER_DATA_COUNT, IMAGE_CHANNELS, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE))
+_image_list = np.reshape(_image_list, (MAX_BUFFER_DATA_SIZE, IMAGE_CHANNELS, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE))
 _data_num = mp.Value('i', 0, lock=False)
 _data_lock = mp.RLock()
 
@@ -275,8 +277,8 @@ def _create_dataset_worker(param):
         print(e)
 
 
-def _create_dataset(dataset_path, sgf_dir, image_dir, augment, is_syn):
-    from config import dataset_dir, DATA_CONVERTOR_WORKER_COUNT, IMAGE_DATASET_NAME, BOARD_DATASET_NAME
+def _create_dataset(dataset_path, sgf_dir, image_dir, augment, is_syn, process_count):
+    from config import dataset_dir, IMAGE_DATASET_NAME, BOARD_DATASET_NAME
 
     if not os.path.isdir(dataset_dir):
         os.mkdir(dataset_dir)
@@ -303,12 +305,12 @@ def _create_dataset(dataset_path, sgf_dir, image_dir, augment, is_syn):
         board_set = f.create_dataset(BOARD_DATASET_NAME, shape=(0, BOARD_SIZE * BOARD_SIZE * 3), maxshape=(None, BOARD_SIZE * BOARD_SIZE * 3), dtype=np.bool)
 
         filecount = len(filenames)
-        filecount_per_process = filecount // DATA_CONVERTOR_WORKER_COUNT
+        filecount_per_process = filecount // process_count
         dataset_count = filecount * (8 if augment else 1)
         params_list = []
-        for i in range(DATA_CONVERTOR_WORKER_COUNT):
+        for i in range(process_count):
             params = {}
-            if i < DATA_CONVERTOR_WORKER_COUNT - 1:
+            if i < process_count - 1:
                 params['files'] = filenames[filecount_per_process * i: filecount_per_process * (i + 1)].copy()
             else:
                 params['files'] = filenames[filecount_per_process * i: filecount].copy()
@@ -325,7 +327,7 @@ def _create_dataset(dataset_path, sgf_dir, image_dir, augment, is_syn):
         while True:
             with _data_lock:
                 count = image_set.shape[0] + _data_num.value
-                if _data_num.value >= BUFFER_DATA_COUNT or count == dataset_count:
+                if _data_num.value >= BUFFER_DATA_SIZE or count == dataset_count:
                     image_set.resize(image_set.shape[0] + _data_num.value, axis=0)
                     image_set[-_data_num.value:] = _image_list[:_data_num.value]
                     board_set.resize(board_set.shape[0] + _data_num.value, axis=0)
@@ -337,18 +339,44 @@ def _create_dataset(dataset_path, sgf_dir, image_dir, augment, is_syn):
             time.sleep(1)
 
 
-def create_real_dataset(dataset_path, sgf_dir, image_dir, augment=True):
-    _create_dataset(dataset_path, sgf_dir, image_dir, augment, False)
+def create_real_dataset(dataset_path, sgf_dir, image_dir, augment=True, process_count=4):
+    _create_dataset(dataset_path, sgf_dir, image_dir, augment, False, process_count)
 
 
-def create_syn_dataset(dataset_path, sgf_dir, augment=False, output_image_dir=None):
+def create_syn_dataset(dataset_path, sgf_dir, augment=False, output_image_dir=None, process_count=4):
     if output_image_dir is not None and not os.path.exists(output_image_dir):
         os.makedirs(output_image_dir)
-    _create_dataset(dataset_path, sgf_dir, output_image_dir, augment, True)
+    _create_dataset(dataset_path, sgf_dir, output_image_dir, augment, True, process_count)
 
 
 if __name__ == '__main__':
-    from config import syn_sgf_dir, syn_training_dataset_path, syn_test_dataset_path, syn_output_image_dir, real_image_dir, real_sgf_dir, real_test_dataset_path
-    # create_syn_dataset(syn_training_dataset_path, syn_sgf_dir, augment=True, output_image_dir=syn_output_image_dir)
-    create_real_dataset(real_test_dataset_path, real_sgf_dir, real_image_dir, augment=True)
-    # create_syn_dataset(syn_test_dataset_path, syn_sgf_dir, augment=True)
+    from config import syn_sgf_dir, syn_training_dataset_path, syn_test_dataset_path, syn_output_image_dir, real_image_dir, real_sgf_dir, real_test_dataset_path, real_training_dataset_path
+
+    parser = argparse.ArgumentParser()
+    # parser.add_argument("--channel", "-c", default=IMAGE_CHANNELS, type=str)
+    parser.add_argument("--train", "-t", help='Specify the data is used for training, only affect the name of the output dataset', action='store_true')
+    parser.add_argument("--synthesize_data", "-syn", help='Generate dataset with synthesized goban image', action='store_true')
+    parser.add_argument("--output_synthesized_image", "-o", help='Output synthesized goban images to {proj_dir}/datasets/syn_image. Only useful if you are curious what the generated image looks like. BEWARE this will eat up a lot of disk space', action='store_true')
+    parser.add_argument("--augment_data", "-a", help='Augment the generated data (rotate and flip)', action='store_true')
+    parser.add_argument("--sgf_dir", "-s", help='Specify the directory of input sgf files', type=str)
+    parser.add_argument("--image_dir", "-i", default=real_image_dir, help='Specify the direcotry of input image files. If --synthensize_data is specified, this option is ignored (because the image is synthesized). ', type=str)
+    parser.add_argument("--process_count", "-p", default=3, help='Spawn *process_count* process to generate data.', type=int)
+    # args = parser.parse_args(sys.argv[1:] if len(sys.argv) > 1 else ['-h'])
+    args = parser.parse_args()
+
+    if args.sgf_dir is None:
+        args.sgf_dir = syn_sgf_dir if args.synthesize_data else real_sgf_dir
+    if not os.path.isdir(args.sgf_dir):
+        raise ValueError('{} does not exist.'.format(args.sgf_dir))
+    if not os.path.isdir(args.image_dir):
+        raise ValueError('{} does not exist.'.format(args.image_dir))
+
+    # if args.channel not in [1, 3]:
+    #     raise ValueError('Channel should be either 1 or 3.')
+    if args.synthesize_data:
+        output_dataset_path = syn_training_dataset_path if args.train else syn_test_dataset_path
+        output_image_dir = syn_output_image_dir if args.generate_synthesized_image else None
+        create_syn_dataset(output_dataset_path, args.sgf_dir, augment=args.augment_data, output_image_dir=output_image_dir)
+    else:
+        output_dataset_path = real_training_dataset_path if args.train else real_test_dataset_path
+        create_real_dataset(output_dataset_path, args.sgf_dir, args.image_dir, augment=args.augment_data)

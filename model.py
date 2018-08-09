@@ -61,7 +61,8 @@ class PZSZModel:
         'kernel_regularizer': regularizers.l2(REG),
         # 'bias_regularizer': regularizers.l2(conf['c']),
     }
-    _RES_BLOCK_COUNTS = [2, 2, 3, 2]
+    # _RES_BLOCK_COUNTS = [2, 2, 3, 2]
+    _RES_BLOCK_COUNTS = [2, 3, 5, 2]
     _RES_BLOCK_FILTERS = [64, 128, 256, 512]
 
     def __init__(self, model_path=None, is_training=False):
@@ -163,9 +164,10 @@ class PZSZModel:
         )
 
     def predict(self, images):
-        output = np.zeros((np.shape(images)[0], BOARD_SIZE, BOARD_SIZE), dtype=np.int8)
+        batch_size = np.shape(images)[0]
+        output = np.zeros((batch_size, BOARD_SIZE, BOARD_SIZE), dtype=np.int8)
         boards = self._model.predict(images)
-        boards_cubic = np.reshape(boards, (np.shape(boards)[0], 3, BOARD_SIZE, BOARD_SIZE), order='F')
+        boards_cubic = np.reshape(boards, (batch_size, 3, BOARD_SIZE, BOARD_SIZE), order='F')
         indices = np.argmax(boards_cubic, axis=1)
         output[indices == 1] = -1
         output[indices == 0] = 1

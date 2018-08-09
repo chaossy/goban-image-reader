@@ -7,9 +7,8 @@ BOARD_SIZE = 19
 SYN_IMAGE_SIZE = 1024
 IMAGE_DATASET_NAME = 'image'
 BOARD_DATASET_NAME = 'board'
-DATA_CONVERTOR_WORKER_COUNT = 3
-BUFFER_DATA_COUNT = 1000
-MAX_BUFFER_DATA_COUNT = BUFFER_DATA_COUNT + 1000
+BUFFER_DATA_SIZE = 1000
+MAX_BUFFER_DATA_SIZE = BUFFER_DATA_SIZE + 1000
 
 ''' path '''
 def _dataset_name(base):
@@ -17,13 +16,15 @@ def _dataset_name(base):
 proj_path = os.path.dirname(os.path.realpath(__file__))
 model_dir = os.path.join(proj_path, 'model')
 log_file_path = os.path.join(proj_path, 'log')
-syn_sgf_dir = os.path.join(proj_path, 'input', 'syn_sgf')
-real_sgf_dir = os.path.join(proj_path, 'input', 'real_sgf')
-real_image_dir = os.path.join(proj_path, 'input', 'real_image')
+syn_sgf_dir = os.path.join(proj_path, 'syn_sgf')
+real_sgf_dir = os.path.join(proj_path, 'real_sgf')
+real_image_dir = os.path.join(proj_path, 'real_image')
+
 dataset_dir = os.path.join(proj_path, 'dataset')
 syn_output_image_dir = os.path.join(dataset_dir, 'syn_image')
 syn_training_dataset_path = os.path.join(dataset_dir, _dataset_name('syn_training_data'))
 syn_test_dataset_path = os.path.join(dataset_dir, _dataset_name('syn_test_data'))
+real_training_dataset_path = os.path.join(dataset_dir, _dataset_name('real_training_data'))
 real_test_dataset_path = os.path.join(dataset_dir, _dataset_name('real_test_data'))
 
 ''' training '''

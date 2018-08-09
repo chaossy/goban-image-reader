@@ -1,8 +1,9 @@
 import numpy as np
 import os
 import h5py
-from model import PZSZModel
 from config import IMAGE_DATASET_NAME, BOARD_DATASET_NAME, proj_path, IMAGE_CHANNELS, TRAIN_IMAGE_SIZE, BOARD_SIZE, BATCH_SIZE
+import argparse
+import sys
 
 
 def _generate_batch_indices(pool, batch_size):
@@ -15,7 +16,6 @@ def _generate_batch_indices(pool, batch_size):
             break
         prob = remain / remain_count
         size = batch_size if remain_count > batch_size else remain_count
-        # out = np.random.choice(index_pool, size=size, p=prob, replace=False)
         out = np.random.choice(indices_pool, size=size, p=prob, replace=False)
         remain[out] = False
         indices = sorted(pool[out].tolist())
@@ -90,7 +90,7 @@ def train():
         model.train_generator(generator, np.ceil(train_dset_size / BATCH_SIZE), val_generator=generator, val_steps_per_epoch=np.ceil(val_dset_size / BATCH_SIZE))
 
 
-def evaluate(dataset_path, model_path=os.path.join(proj_path, 'best_model.hdf5')):
+def evaluate(dataset_path, model_path):
     model = PZSZModel(model_path)
     with h5py.File(dataset_path, 'r') as f:
         images, boards = f[IMAGE_DATASET_NAME][:], f[BOARD_DATASET_NAME][:]
@@ -98,37 +98,55 @@ def evaluate(dataset_path, model_path=os.path.join(proj_path, 'best_model.hdf5')
     print('loss: {}, acc_stone: {}, acc_board: {}'.format(loss, acc_stone, acc_board))
 
 
-def predict(model_path=os.path.join(proj_path, 'best_model.hdf5')):
+def predict(model_path, image_file_paths):
     model = PZSZModel(model_path)
     from PIL import Image
     from board import Board
     board = Board()
-    for i in range(417, 418):
-        im = Image.open(os.path.join(proj_path, 'input', 'real_image', '{}.png'.format(str(i))))
+    inputs = np.zeros((0, IMAGE_CHANNELS, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE), dtype=np.uint8)
+    for image_file_path in image_file_paths:
+        im = Image.open(image_file_path)
         im.thumbnail((TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE))
         if IMAGE_CHANNELS == 1:
             im = im.convert('L')
         im_array = np.array(im)
-        Image.fromarray(im_array).show()
         if IMAGE_CHANNELS == 3:
             im_array = np.swapaxes(im_array, 0, 2)
             im_array = np.swapaxes(im_array, 1, 2)
-            # im_array_list[i] = im_array
-            output = model.predict(np.expand_dims(im_array[:3, ...], axis=0))
-            board.board = output[0]
-            print('{}:'.format(i))
+            im_array = im_array[:3, ...]
         else:
             im_array = np.expand_dims(im_array, axis=0)
-            output = model.predict(np.expand_dims(im_array, axis=0))
-            board.board = output[0]
-            print('{}:'.format(i))
+        im_array = np.expand_dims(im_array, axis=0)
+        inputs = np.concatenate((inputs, im_array))
+    output = model.predict(inputs)
+    assert np.shape(output)[0] == len(image_file_paths)
+    for i, image_file_path in enumerate(image_file_paths):
+        print('{}:'.format(image_file_path))
+        board.board = output[i]
         board.pretty_board()
 
 
 if __name__ == '__main__':
-    train()
-
-    # from config import real_test_dataset_path
-    # evaluate(real_test_dataset_path, model_path=os.path.join(proj_path, '51.hdf5'))
-
-    # predict()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--train", "-t", action='store_true')
+    parser.add_argument("--evaluate", "-e", action='store_true')
+    parser.add_argument("--predict", "-p", action='store_true')
+    parser.add_argument("--model_file", "-m", help="Path of the model file for evaluating or predicting.", default=os.path.join(proj_path, 'best_model.hdf5'), type=str)
+    args = parser.parse_args(sys.argv[1:] if len(sys.argv) > 1 else ['-h'])
+    if not os.path.isfile(args.model):
+        raise ValueError('Model file not exist.')
+    if args.train + args.evaluate + args.predict != 1:
+        raise ValueError('Choose one of --train, --evaluate, --predict.')
+    from model import PZSZModel
+    from config import real_test_dataset_path
+    if args.train:
+        train()
+    elif args.evaluate:
+        evaluate(real_test_dataset_path, model_path=args.model)
+    elif args.predict:
+        image_file_paths = []
+        for i in range(61, 62):
+            path = os.path.join(proj_path, 'real_image', '{}.png'.format(str(i)))
+            if os.path.isfile(path):
+                image_file_paths.append(path)
+        predict(model_path=args.model, image_file_paths=image_file_paths)

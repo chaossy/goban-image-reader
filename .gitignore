@@ -1,7 +1,8 @@
 __pycache__
 .idea
 dataset
-input
 model
+syn_sgf
+real_sgf
+real_image
 log
-
