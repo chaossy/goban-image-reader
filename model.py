@@ -62,10 +62,11 @@ class PZSZModel:
         # 'bias_regularizer': regularizers.l2(conf['c']),
     }
     # _RES_BLOCK_COUNTS = [2, 2, 3, 2]
-    # _RES_BLOCK_COUNTS = [2, 3, 5, 2]
+    _RES_BLOCK_COUNTS = [2, 3, 5, 2]
     # _RES_BLOCK_COUNTS = [1, 1, 2, 1]
-    _RES_BLOCK_COUNTS = [1, 1, 1]
-    _RES_BLOCK_FILTERS = [64, 128, 256]
+    # _RES_BLOCK_COUNTS = [1, 1, 1]
+    # _RES_BLOCK_FILTERS = [64, 128, 256]
+    _RES_BLOCK_FILTERS = [64, 128, 256, 512]
 
     def __init__(self, model_path=None, is_training=False):
         self._construct_model()
@@ -98,7 +99,7 @@ class PZSZModel:
         for i, block_count in enumerate(self._RES_BLOCK_COUNTS):                          #28->14->7
             for j in range(block_count):
                 output = self._construct_res_block(output, filters=self._RES_BLOCK_FILTERS[i], reduce_dim=(i > 0 and j == 0))
-        output = AveragePooling2D(pool_size=(14, 14), strides=(1, 1), data_format="channels_first")(output)
+        output = AveragePooling2D(pool_size=(7, 7), strides=(1, 1), data_format="channels_first")(output)
         output = Flatten()(output)
         sm_list = []
         for i in range(BOARD_SIZE * BOARD_SIZE):
@@ -139,7 +140,7 @@ class PZSZModel:
         self.load_weights(self._model_file_path(init_epoch))
         return init_epoch
 
-    def train(self, images, boards, init_epoch=None):
+    def train(self, images, boards):
         init_epoch = self._config_training()
         self._model.fit(
             images,
@@ -191,18 +192,18 @@ class PZSZModel:
 
     @classmethod
     def _model_dir(cls):
-        # return os.path.join(model_dir, '{}_{}_{}_{}_{}_{}_{}'.format(
-        #     TRAIN_IMAGE_SIZE,
-        #     IMAGE_CHANNELS,
-        #     *cls._RES_BLOCK_COUNTS,
-        #     str(REG).replace('.', ''))
-        # )
-        return os.path.join(model_dir, '{}_{}_{}_{}_{}_{}'.format(
+        return os.path.join(model_dir, '{}_{}_{}_{}_{}_{}_{}'.format(
             TRAIN_IMAGE_SIZE,
             IMAGE_CHANNELS,
             *cls._RES_BLOCK_COUNTS,
             str(REG).replace('.', ''))
         )
+        # return os.path.join(model_dir, '{}_{}_{}_{}_{}_{}'.format(
+        #     TRAIN_IMAGE_SIZE,
+        #     IMAGE_CHANNELS,
+        #     *cls._RES_BLOCK_COUNTS,
+        #     str(REG).replace('.', ''))
+        # )
 
     @classmethod
     def _model_file_path(cls, epoch):
