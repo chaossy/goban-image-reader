@@ -359,11 +359,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument("--channel", "-c", default=IMAGE_CHANNELS, type=str)
     parser.add_argument("--train", "-t", help='Specify that the dataset is used for training, only affect output dataset name', action='store_true')
-    parser.add_argument("--synthesize_data", "-syn", help='Generate the dataset with synthesized goban image', action='store_true')
-    parser.add_argument("--output_synthesized_image", "-o", help='Output synthesized goban images to {proj_dir}/datasets/syn_image. Only useful if you are curious what the generated image looks like. BEWARE this will eat up a lot of disk space', action='store_true')
+    parser.add_argument("--synthesize_data", "-syn", help='Generate the dataset with synthetic goban image', action='store_true')
+    parser.add_argument("--output_synthetic_image", "-o", help='Output synthetic goban images to {proj_dir}/datasets/syn_image. Only useful if you are curious what the generated image looks like. BEWARE this will eat up a lot of disk space', action='store_true')
     parser.add_argument("--augment_data", "-a", help='Augment the generated data (rotate and flip)', action='store_true')
     parser.add_argument("--sgf_dir", "-s", help='Specify the directory of input sgf files', type=str)
-    parser.add_argument("--image_dir", "-i", default=real_image_dir, help='Specify the direcotry of input image files. If --synthensize_data is specified, this option is ignored (because the image is synthesized). ', type=str)
+    parser.add_argument("--image_dir", "-i", default=real_image_dir, help='Specify the direcotry of input image files. If --synthensize_data is specified, this option is ignored (because the image is synthetic). ', type=str)
     parser.add_argument("--process_count", "-p", default=3, help='Spawn *process_count* process to generate data.', type=int)
     # args = parser.parse_args(sys.argv[1:] if len(sys.argv) > 1 else ['-h'])
     args = parser.parse_args()
@@ -379,7 +379,7 @@ if __name__ == '__main__':
     #     raise ValueError('Channel should be either 1 or 3.')
     if args.synthesize_data:
         output_dataset_path = syn_training_dataset_path if args.train else syn_test_dataset_path
-        output_image_dir = syn_output_image_dir if args.output_synthesized_image else None
+        output_image_dir = syn_output_image_dir if args.output_synthetic_image else None
         create_syn_dataset(output_dataset_path, args.sgf_dir, augment=args.augment_data, output_image_dir=output_image_dir)
     else:
         output_dataset_path = real_training_dataset_path if args.train else real_test_dataset_path
