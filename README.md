@@ -19,7 +19,7 @@ Usage(temporary version, in chinese):
    选项说明：<br />
    -es: 测试合成数据集<br />
    -er: 测试真实数据集
-8. 使用 python main.py -p filepath1, filepath2 预测输入的图片
+8. 使用 python main.py -p filepath1 filepath2 预测输入的图片
 
 
 
