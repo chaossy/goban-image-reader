@@ -35,22 +35,14 @@ def _load_data_from_disk(image_chunk, board_chunk, image_dset, board_dset, start
 
 
 def train():
-    from config import syn_training_dataset_path
-    # from keras.utils import HDF5Matrix
-    # model = PZSZModel()
-    # # with h5py.File(syn_training_dataset_path, 'r') as f:
-    # #     images, boards = f[IMAGE_DATASET_NAME][:], f[BOARD_DATASET_NAME][:]
-    # images = HDF5Matrix(syn_training_dataset_path, IMAGE_DATASET_NAME)
-    # boards = HDF5Matrix(syn_training_dataset_path, BOARD_DATASET_NAME)
-    # model.train(images, boards)
-
-    with h5py.File(syn_training_dataset_path, 'r') as f:
+    from config import train_dataset_path
+    with h5py.File(train_dataset_path, 'r') as f:
         image_dset, board_dset = f[IMAGE_DATASET_NAME], f[BOARD_DATASET_NAME]
         dset_size = np.shape(image_dset)[0]
         assert dset_size == np.shape(board_dset)[0]
         val_dset_size = int(dset_size * 0.1)
         train_dset_size = dset_size - val_dset_size
-        chunk_size = 512 * 100
+        chunk_size = 512 * 64
 
         def generator(is_training):
             lower_bound = 0 if is_training else train_dset_size
@@ -129,22 +121,22 @@ def predict(model_path, image_file_paths):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--train", "-t", action='store_true')
-    parser.add_argument("--evaluate_real_data", "-er", action='store_true')
-    parser.add_argument("--evaluate_syn_data", "-es", action='store_true')
+    parser.add_argument("--evaluate_real", "-er", action='store_true')
+    parser.add_argument("--evaluate_syn", "-es", action='store_true')
     parser.add_argument("--predict", "-p", nargs="+")
     parser.add_argument("--model", "-m", help="Path of the model file for evaluating or predicting", default=os.path.join(proj_path, 'best_model.hdf5'), type=str)
     args = parser.parse_args(sys.argv[1:] if len(sys.argv) > 1 else ['-h'])
     if not os.path.isfile(args.model):
         raise ValueError('Model file not exist')
-    if args.train + args.evaluate_real_data + args.evaluate_syn_data + (1 if len(args.predict) > 0 else 0) != 1:
-        raise ValueError('Choose one of --train, --evaluate_real_data, --evaluate_syn_data, --predict')
+    if args.train + args.evaluate_real + args.evaluate_syn + (0 if args.predict is None else (1 if len(args.predict) > 0 else 0)) != 1:
+        raise ValueError('Choose one of --train, --evaluate_real, --evaluate_syn, --predict')
     from model import PZSZModel
     from config import real_test_dataset_path, syn_test_dataset_path
     if args.train:
         train()
-    elif args.evaluate_real_data:
+    elif args.evaluate_real:
         evaluate(real_test_dataset_path, model_path=args.model)
-    elif args.evaluate_syn_data:
+    elif args.evaluate_syn:
         evaluate(syn_test_dataset_path, model_path=args.model)
     elif args.predict:
         image_file_paths = []

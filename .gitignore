@@ -2,7 +2,10 @@ __pycache__
 .idea
 dataset
 model
-syn_sgf
-real_sgf
-real_image
+real_test_image
+real_test_sgf
+real_train_image
+real_train_sgf
+syn_test_sgf
+syn_train_sgf
 log
