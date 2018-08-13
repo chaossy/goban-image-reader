@@ -127,9 +127,9 @@ if __name__ == '__main__':
     parser.add_argument("--model", "-m", help="Path of the model file for evaluating or predicting", default=os.path.join(proj_path, 'best_model.hdf5'), type=str)
     args = parser.parse_args(sys.argv[1:] if len(sys.argv) > 1 else ['-h'])
     if not os.path.isfile(args.model):
-        raise ValueError('Model file not exist')
+        raise ValueError('{} not found'.format(args.model))
     if args.train + args.evaluate_real + args.evaluate_syn + (0 if args.predict is None else (1 if len(args.predict) > 0 else 0)) != 1:
-        raise ValueError('Choose one of --train, --evaluate_real, --evaluate_syn, --predict')
+        raise ValueError('Choose one of [--train --evaluate_real --evaluate_syn --predict]')
     from model import PZSZModel
     from config import real_test_dataset_path, syn_test_dataset_path
     if args.train:
@@ -141,7 +141,8 @@ if __name__ == '__main__':
     elif args.predict:
         image_file_paths = []
         for path in args.predict:
-            # path = os.path.join(proj_path, 'real_image', '{}.png'.format(str(i)))
             if os.path.isfile(path):
                 image_file_paths.append(path)
+            else:
+                print('{} not found'.format(path))
         predict(model_path=args.model, image_file_paths=image_file_paths)

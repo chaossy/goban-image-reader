@@ -16,7 +16,6 @@ import random
 #TODO: 强化照片(光线, 背景), tensorboard
 #TODO: mem usage
 #TODO: fix: python process not quit
-#TODO: find a good network
 #TODO: save whole model?
 #TODO: on the fly lr change
 
@@ -254,9 +253,7 @@ def _create_dataset_worker(param):
     try:
         augment = param['augment']
         filenames = param['files']
-        # sgf_dir = param['sgf_dir']
         output_image_dir = param['output_image_dir']
-        # is_syn = param['is_syn']
 
         for i, filename in enumerate(filenames):
             # sgf_filepath = os.path.join(sgf_dir, filename + '.sgf')
@@ -329,10 +326,10 @@ def _create_dataset(dataset_path, syn_sgf_dir, real_sgf_dir, real_image_dir, out
     with h5py.File(dataset_path, 'a') as f:
         image_set = f.create_dataset(IMAGE_DATASET_NAME, shape=(0, IMAGE_CHANNELS, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE), maxshape=(None, IMAGE_CHANNELS, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE), dtype=np.uint8)
         board_set = f.create_dataset(BOARD_DATASET_NAME, shape=(0, BOARD_SIZE * BOARD_SIZE * 3), maxshape=(None, BOARD_SIZE * BOARD_SIZE * 3), dtype=np.bool)
-
         filecount = len(filenames)
         filecount_per_process = filecount // process_count
         dataset_count = len(syn_filenames) + len(real_filenames) * (8 if augment else 1)
+
         params_list = []
         for i in range(process_count):
             params = {}
@@ -340,11 +337,8 @@ def _create_dataset(dataset_path, syn_sgf_dir, real_sgf_dir, real_image_dir, out
                 params['files'] = filenames[filecount_per_process * i: filecount_per_process * (i + 1)].copy()
             else:
                 params['files'] = filenames[filecount_per_process * i: filecount].copy()
-            # params['num'] = filecount_per_process * i
             params['augment'] = augment
-            # params['sgf_dir'] = sgf_dir
             params['output_image_dir'] = output_image_dir
-            # params['is_syn'] = is_syn
             params_list.append(params)
 
         pool = mp.Pool()
@@ -368,7 +362,7 @@ def _create_dataset(dataset_path, syn_sgf_dir, real_sgf_dir, real_image_dir, out
 if __name__ == '__main__':
     from config import syn_train_sgf_dir, syn_test_sgf_dir, real_train_sgf_dir, real_train_image_dir, real_test_sgf_dir, real_test_image_dir, syn_output_image_dir, train_dataset_path, syn_test_dataset_path, real_test_dataset_path
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", "-d", nargs="+", help='Specify the dataset you want to create, legal choices includes "train, syn_test, real_test"')
+    parser.add_argument("--dataset", "-d", nargs="+", help='Specify the dataset you want to create, legal choices includes [train syn_test real_test]')
     parser.add_argument("--syn_train_sgf_dir", default=syn_train_sgf_dir, type=str)
     parser.add_argument("--syn_test_sgf_dir", default=syn_test_sgf_dir, type=str)
     parser.add_argument("--output_syn_image", "-o", help='Output synthetic goban images to datasets/syn_image. Useful if you are curious about what the generated image looks like. BEWARE this will eat up a lot of disk space if you have a lot of sgf files', action='store_true')
@@ -381,9 +375,9 @@ if __name__ == '__main__':
     args = parser.parse_args(sys.argv[1:] if len(sys.argv) > 1 else ['-h'])
 
     if args.dataset is None:
-        raise ValueError('Please specify the dataset you want to create, legal choices includes "train, syn_test, real_test"')
+        raise ValueError('Please specify the dataset you want to create, legal choices includes [train syn_test real_test]')
     if not set(args.dataset).issubset({'real_test', 'syn_test', 'train'}):
-        raise ValueError('{} not supported, legal choices includes "train, syn_test, real_test"'.format(args.dataset))
+        raise ValueError('{} not supported, legal choices includes [train syn_test real_test]'.format(args.dataset))
 
     output_image_dir = syn_output_image_dir if args.output_syn_image else None
     if output_image_dir is not None and not os.path.exists(output_image_dir):
@@ -392,15 +386,15 @@ if __name__ == '__main__':
     if 'real_test' in args.dataset:
         print('Creating real test dataset...')
         if not os.path.isdir(args.real_test_sgf_dir):
-            raise ValueError('{} not exist'.format(args.real_test_sgf_dir))
+            raise ValueError('{} not found'.format(args.real_test_sgf_dir))
         if not os.path.isdir(args.real_test_image_dir):
-            raise ValueError('{} not exist'.format(args.real_test_image_dir))
+            raise ValueError('{} not found'.format(args.real_test_image_dir))
         _create_dataset(real_test_dataset_path, None, args.real_test_sgf_dir, args.real_test_image_dir, None, not args.no_augmentation, args.process)
 
     if 'syn_test' in args.dataset:
         print('Creating synthetic test dataset...')
         if not os.path.isdir(args.syn_test_sgf_dir):
-            raise ValueError('{} not exist'.format(args.syn_test_sgf_dir))
+            raise ValueError('{} not found'.format(args.syn_test_sgf_dir))
         _create_dataset(syn_test_dataset_path, args.syn_test_sgf_dir, None, None, output_image_dir, False, args.process)
 
     if 'train' in args.dataset:
