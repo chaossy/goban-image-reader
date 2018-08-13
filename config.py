@@ -31,10 +31,10 @@ syn_test_dataset_path = os.path.join(dataset_dir, _dataset_name('syn_test_data')
 real_test_dataset_path = os.path.join(dataset_dir, _dataset_name('real_test_data'))
 
 ''' training '''
-LR = 0.004#0.0004
-LR_REDUCE_FACTOR = 0.5
-LR_REDUCE_EPSILON = 0.01
-LR_REDUCE_PATIENCE = 5
+LR = 0.01
+# LR_REDUCE_FACTOR = 0.5
+# LR_REDUCE_EPSILON = 0.01
+# LR_REDUCE_PATIENCE = 5
 MODEL_SAVE_PERIOD = 3
 MOMENTUM = 0.9
 EPOCHS = 100

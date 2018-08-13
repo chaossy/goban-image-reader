@@ -90,7 +90,7 @@ def evaluate(dataset_path, model_path):
     print('loss: {}, acc_stone: {}, acc_board: {}'.format(loss, acc_stone, acc_board))
 
 
-def predict(model_path, image_file_paths):
+def predict(image_file_paths, model_path):
     model = PZSZModel(model_path)
     from PIL import Image
     from board import Board
@@ -145,4 +145,4 @@ if __name__ == '__main__':
                 image_file_paths.append(path)
             else:
                 print('{} not found'.format(path))
-        predict(model_path=args.model, image_file_paths=image_file_paths)
+        predict(image_file_paths, args.model)

@@ -16,8 +16,6 @@ import random
 #TODO: 强化照片(光线, 背景), tensorboard
 #TODO: mem usage
 #TODO: fix: python process not quit
-#TODO: save whole model?
-#TODO: on the fly lr change
 
 
 def _augment_data(data, dtype=None):
