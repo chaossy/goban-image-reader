@@ -74,7 +74,6 @@ class PZSZModel:
         else:
             self._model = load_model(model_path, custom_objects={'loss': loss, 'acc_stone': acc_stone, 'acc_board': acc_board})
 
-
     def _construct_conv_layer(self, input, filters=64, kernel_size=(3, 3), strides=(1, 1)):
         output = Conv2D(filters=filters, kernel_size=kernel_size, strides=strides, data_format="channels_first", use_bias=False, padding='same', **self._REGULARIZERS)(input)
         output = BatchNormalization(axis=1)(output)
@@ -124,7 +123,7 @@ class PZSZModel:
                     dic['lr'] = K.eval(self._model.optimizer.lr)
                     json.dump(dic, f, cls=NumpyEncoder)
         def learningRateSchedulerFunc(epoch):
-            return LR * (0.5 ** (epoch // 5))
+            return LR * (0.5 ** (epoch // 8))
         return [
             # callbacks.ReduceLROnPlateau(monitor='loss', factor=LR_REDUCE_FACTOR, patience=LR_REDUCE_PATIENCE, epsilon=LR_REDUCE_EPSILON),
             # callbacks.ModelCheckpoint(os.path.join(proj_path, '{epoch:d}.hdf5'), period=MODEL_SAVE_PERIOD),
