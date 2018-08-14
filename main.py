@@ -92,13 +92,15 @@ def evaluate(dataset_path, model_path):
 
 def predict(image_file_paths, model_path):
     model = PZSZModel(model_path)
-    from PIL import Image
+    from PIL import Image, ImageOps
     from board import Board
     board = Board()
     inputs = np.zeros((0, IMAGE_CHANNELS, TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE), dtype=np.uint8)
     for image_file_path in image_file_paths:
         im = Image.open(image_file_path)
-        im.thumbnail((TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE))
+        size = (TRAIN_IMAGE_SIZE, TRAIN_IMAGE_SIZE)
+        im.thumbnail(size, Image.ANTIALIAS)
+        im = ImageOps.fit(im, size, Image.ANTIALIAS)
         if IMAGE_CHANNELS == 1:
             im = im.convert('L')
         im_array = np.array(im)
