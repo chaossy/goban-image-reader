@@ -2,7 +2,7 @@ goban-image-reader
 ====================
 A tool for transforming goban image to sgf file using deep learning.
 
-This project is still under development. As of August 2018,  the accuracy for a single position (i.e. line intersection) is about 96% and  the accuracy for the whole board is about 17%. 
+This project is still under development. As of August 2018,  the accuracy for a single position (i.e. line intersection) is about 99.8% and  the accuracy for the whole board is about 72%. 
 
 Install
 ---

@@ -13,7 +13,7 @@ import sys
 import random
 
 
-#TODO: 强化照片(光线, 背景), tensorboard
+#TODO: tensorboard
 #TODO: mem usage
 #TODO: fix: python process not quit
 
