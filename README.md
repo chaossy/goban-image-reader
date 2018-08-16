@@ -7,7 +7,7 @@ This project is still under development. As of August 2018,  the accuracy for a 
 Install
 ---
 1. cd goban-image-reader
-2. (optional) Create a virtualenv and activate it. [virtualenv](https://virtualenv.pypa.io/en/stable/userguide/#usage)
+2. (optional) Create a [virtualenv](https://virtualenv.pypa.io/en/stable/userguide/#usage) and activate it. 
 3. pip install -r requirements.txt
 
 Usage
@@ -29,7 +29,6 @@ Usage
 TODOs
 ---
 * Get more training datas 
-* Try using AutoML or similar tools to improve the network
 * Add a mechanism for recognizing non-board image
 * Enhance the synthetic image to make it more "real"
 * Upload to pip (and how?)
