@@ -31,4 +31,3 @@ TODOs
 * Get more training datas 
 * Add a mechanism for recognizing non-board image
 * Enhance the synthetic image to make it more "real"
-* Upload to pip (and how?)
